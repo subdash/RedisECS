@@ -1,0 +1,34 @@
+services:
+  rate-limiting-app:
+    depends_on:
+      - redis-local
+    image: node:alpine3.20
+    ports:
+      - "3000:3000"
+    volumes:
+      - type: bind
+        source: ../../app
+        target: /usr/local/app/
+    working_dir: /usr/local/app/
+    entrypoint: ["npm", "run", "start"]
+    networks:
+      - container_network
+
+  redis-local:
+    image: redis:alpine3.20
+    ports:
+      - "6379:6379"
+    volumes:
+      - type: bind
+        source: ${PWD}/redis.conf
+        target: /usr/local/etc/redis/redis.conf
+    entrypoint: redis-server /usr/local/etc/redis/redis.conf
+    networks:
+      - container_network
+
+volumes:
+  redis.conf:
+
+networks:
+  container_network:
+    driver: bridge
