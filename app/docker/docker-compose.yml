@@ -13,6 +13,8 @@ services:
     entrypoint: ["npm", "run", "start"]
     networks:
       - container_network
+    environment:
+      REDIS_HOST: "redis-local"
 
   redis-local:
     image: redis:alpine3.20

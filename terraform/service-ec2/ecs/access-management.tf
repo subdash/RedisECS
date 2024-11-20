@@ -4,9 +4,19 @@ resource "aws_security_group" "ecs_sg" {
 }
 
 resource "aws_vpc_security_group_ingress_rule" "sg_ingress" {
-  cidr_ipv4         = "0.0.0.0/0"
-  from_port         = 0
-  to_port           = 6379
+  cidr_ipv4 = "0.0.0.0/0"
+  // Port exposed by app container
+  from_port         = 3000
+  to_port           = 3000
+  ip_protocol       = "tcp"
+  security_group_id = aws_security_group.ecs_sg.id
+}
+
+resource "aws_vpc_security_group_ingress_rule" "sg_ingress_port_80" {
+  cidr_ipv4 = "0.0.0.0/0"
+  // Allow all???
+  from_port         = 80
+  to_port           = 80
   ip_protocol       = "tcp"
   security_group_id = aws_security_group.ecs_sg.id
 }
@@ -16,6 +26,44 @@ resource "aws_vpc_security_group_egress_rule" "sg_egress" {
   cidr_ipv4         = "0.0.0.0/0"
   ip_protocol       = "-1"
   security_group_id = aws_security_group.ecs_sg.id
+}
+
+resource "aws_security_group" "lb_sg" {
+  name   = "load-balancer-sg"
+  vpc_id = var.vpc_id
+}
+
+resource "aws_vpc_security_group_egress_rule" "lb_sg_egress" {
+  ip_protocol       = "-1"
+  cidr_ipv4         = "0.0.0.0/0"
+  security_group_id = aws_security_group.lb_sg.id
+}
+
+# https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-update-security-groups.html#security-group-recommended-rules
+resource "aws_vpc_security_group_ingress_rule" "path_mtu_discovery" {
+  from_port         = -1
+  to_port           = -1
+  cidr_ipv4         = "0.0.0.0/0"
+  security_group_id = aws_security_group.lb_sg.id
+  ip_protocol       = "icmp"
+}
+
+// Allow all http ingress
+resource "aws_vpc_security_group_ingress_rule" "listener_http_ingress" {
+  from_port         = 80
+  to_port           = 80
+  cidr_ipv4         = "0.0.0.0/0"
+  security_group_id = aws_security_group.lb_sg.id
+  ip_protocol       = "tcp"
+}
+
+// Allow all https ingress
+resource "aws_vpc_security_group_ingress_rule" "listener_https_ingress" {
+  from_port         = 443
+  to_port           = 443
+  cidr_ipv4         = "0.0.0.0/0"
+  security_group_id = aws_security_group.lb_sg.id
+  ip_protocol       = "tcp"
 }
 
 // NOTE: Just an example

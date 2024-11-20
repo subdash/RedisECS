@@ -6,15 +6,45 @@ const expressPort = 3000;
 
 const getRedis = () => {
   if (redis == null) {
-    redis = new Redis(6379, "redis-local");
+    redis = new Redis(6379, process.env.REDIS_DNS!);
   }
   return redis;
 };
 
 const server = express();
 
-server.get("/ping", (req, res) => {
+interface HealthResponse {
+  redis: {
+    ping: string | null;
+    env: {
+      endpoint: string | null;
+    };
+  };
+  serverTime: number;
+}
+
+server.get("/ping", (_, res) => {
   res.json({ ping: "pong" });
+});
+
+server.get("/health", async (_, res) => {
+  const response: HealthResponse = {
+    redis: {
+      ping: null,
+      env: {
+        endpoint: process.env.REDIS_NAMESPACE || null,
+      },
+    },
+    serverTime: Date.now(),
+  };
+  res.status(200); // Be explicit -- this will be used for health checks
+  try {
+    response.redis.ping = await getRedis().ping();
+  } catch (e) {
+    res.status(500);
+    console.error(e);
+  }
+  res.json(response);
 });
 
 server.get("/set/:key/:value", async (req, res) => {

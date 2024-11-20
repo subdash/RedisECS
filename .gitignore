@@ -3,3 +3,5 @@
 /terraform/**/errored.tfstate
 /app/node_modules/
 /app/dist/
+/**/**/*.pem
+.idea/

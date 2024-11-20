@@ -4,5 +4,6 @@ FROM node:alpine3.20
 COPY .. /usr/local/app
 WORKDIR /usr/local/app
 RUN npm install
+RUN npm run build
 EXPOSE 3000
 CMD [ "npm", "run", "start" ]
